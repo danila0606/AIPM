@@ -4,6 +4,7 @@ import { useProducts } from '../hooks/useProducts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../services/api';
 import { Product } from '../types/product';
+import { API_BASE_URL } from '../services/api';
 
 export const ShopPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);

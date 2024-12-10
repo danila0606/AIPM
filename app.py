@@ -27,7 +27,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:/
 
 CORS(app, supports_credentials=True, resources={
     r"/*": {
-        "origins": ["http://localhost:5173", "https://polyswipe-8rc5hzpie-vsevolod-malevannyis-projects.vercel.app"],  # Your React frontend URL
+        "origins": ["*"],  # Your React frontend URL
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
