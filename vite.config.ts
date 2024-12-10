@@ -2,18 +2,15 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react()],
-  optimizeDeps: {
-    exclude: ['lucide-react'],
-  },
   server: {
-    proxy: {
+    proxy: command === 'serve' ? {
       '/api': {
-        target:  'https://polyswipe-d56822d3db23.herokuapp.com',
+        target: 'http://localhost:4000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/api/, ''),
       },
-    },
+    } : undefined
   },
-});
+}));

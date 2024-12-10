@@ -14,7 +14,7 @@ export const ShopPage: React.FC = () => {
   const fetchMoreProducts = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:4000/get_images', {
+      const response = await fetch(`${API_BASE_URL}/get_images`, {
         credentials: 'include',
         headers: {
           'Accept': 'application/json',

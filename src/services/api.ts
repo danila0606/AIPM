@@ -1,5 +1,17 @@
 // const API_BASE_URL = 'http://localhost:4000';
-const API_BASE_URL = 'https://polyswipe-d56822d3db23.herokuapp.com';
+export const API_BASE_URL = 'https://polyswipe-d56822d3db23.herokuapp.com';
+
+// Ensure all fetch calls include credentials
+const fetchWithCredentials = (url: string, options: RequestInit = {}) => {
+  return fetch(url, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
 
 interface LoginCredentials {
   username: string;
