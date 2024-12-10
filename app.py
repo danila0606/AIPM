@@ -25,14 +25,24 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///database.db")
 
-CORS(app, supports_credentials=True, resources={
-    r"/*": {
-        "origins": ["https://polyswipe-8rc5hzpie-vsevolod-malevannyis-projects.vercel.app"],  # Your Vercel frontend URL
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True
-    }
-})
+CORS(app, 
+     supports_credentials=True,
+     resources={r"/*": {
+         "origins": ["https://polyswipe.vercel.app"],  # Your actual Vercel frontend URL
+         "methods": ["GET", "POST", "OPTIONS"],
+         "allow_headers": ["Content-Type", "Authorization"],
+         "expose_headers": ["Access-Control-Allow-Origin"],
+         "supports_credentials": True,
+         "allow_credentials": True
+     }})
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Origin', 'https://polyswipe.vercel.app')
+    return response
 
 # Configuration
 app.config["SECRET_KEY"] = os.urandom(32)  # Replace with a secure key
@@ -43,7 +53,8 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_SAMESITE='None',
-    SESSION_COOKIE_DOMAIN='polyswipe-d56822d3db23.herokuapp.com'  # Your Heroku domain
+    SESSION_COOKIE_DOMAIN='https://polyswipe.vercel.app',
+    SESSION_COOKIE_HTTPONLY=False
 )
 
 # Initialize extensions
