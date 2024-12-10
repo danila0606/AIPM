@@ -21,9 +21,13 @@ from typing import List
 from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
+
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///database.db")
+
 CORS(app, supports_credentials=True, resources={
     r"/*": {
-        "origins": ["http://localhost:5173"],  # Your React frontend URL
+        "origins": ["http://localhost:5173", "https://polyswipe-8rc5hzpie-vsevolod-malevannyis-projects.vercel.app"],  # Your React frontend URL
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True

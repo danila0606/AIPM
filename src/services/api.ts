@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:4000';
+// const API_BASE_URL = 'http://localhost:4000';
+const API_BASE_URL = 'https://polyswipe-d56822d3db23.herokuapp.com';
 
 interface LoginCredentials {
   username: string;

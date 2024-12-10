@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:4000',
+        target:  'https://polyswipe-d56822d3db23.herokuapp.com',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
