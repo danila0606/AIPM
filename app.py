@@ -27,7 +27,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:/
 
 CORS(app, supports_credentials=True, resources={
     r"/*": {
-        "origins": ["*"],  # Your React frontend URL
+        "origins": ["https://polyswipe-8rc5hzpie-vsevolod-malevannyis-projects.vercel.app"],  # Your Vercel frontend URL
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
@@ -43,7 +43,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_SAMESITE='None',
-    SESSION_COOKIE_DOMAIN='.herokuapp.com'  # Adjust based on your domain
+    SESSION_COOKIE_DOMAIN='polyswipe-d56822d3db23.herokuapp.com'  # Your Heroku domain
 )
 
 # Initialize extensions
