@@ -79,12 +79,6 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=False
 )
 
-# Initialize extensions
-db = SQLAlchemy(app)
-login_manager = LoginManager()
-login_manager.login_view = "login"  # Redirect to 'login' for @login_required
-login_manager.init_app(app)
-
 
 #############################################################################################
 # Recommender
