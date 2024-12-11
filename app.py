@@ -11,7 +11,13 @@ from flask_login import (
 from database import db
 import os
 import pandas as pd
+import numpy as np
 from urllib.parse import urlparse
+import random
+from sklearn.metrics.pairwise import cosine_similarity
+import re
+import json
+from werkzeug.security import generate_password_hash, check_password_hash
 
 def create_app():
     app = Flask(__name__)
@@ -44,10 +50,12 @@ def create_app():
     db.init_app(app)
     
     # Initialize login manager
-    login_manager = LoginManager()
     login_manager.init_app(app)
 
     return app
+
+# Initialize LoginManager at the module level
+login_manager = LoginManager()
 
 app = create_app()
 
@@ -68,9 +76,10 @@ def after_request(response):
     return response
 
 # Configuration
-app.config["SECRET_KEY"] = os.urandom(32)  # Replace with a secure key
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"  # SQLite database
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# These configurations have been moved inside create_app to avoid redundancy
+# app.config["SECRET_KEY"] = os.urandom(32)  # Already set in create_app
+# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"  # Already set in create_app
+# app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # Already set in create_app
 
 # Ensure your session configuration is secure
 app.config.update(
@@ -80,25 +89,20 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=False
 )
 
-
 #############################################################################################
 # Recommender
 df = pd.read_pickle("embeds.pkl")
-top_k = 2 # How many items to recommend per request
+top_k = 2  # How many items to recommend per request
 
 def update_user_profile(user_likes, user_dislikes, user_seen, df):
     liked_embeddings = [df.iloc[idx]['embedding'] for idx in user_likes]
     disliked_embeddings = [df.iloc[idx]['embedding'] for idx in user_dislikes]
-
 
     user_profile = np.mean(liked_embeddings, axis=0) 
 
     dislike_weight = 0.5 
     if disliked_embeddings:
         user_profile -= dislike_weight * np.mean(disliked_embeddings, axis=0)
-
-
-    return user_profile
 
 def retrieve_recommendations(user_profile, user_likes, user_dislikes, user_seen, df, top_k=2):
     item_embeddings = np.array(df['embedding'].tolist())
@@ -110,12 +114,10 @@ def retrieve_recommendations(user_profile, user_likes, user_dislikes, user_seen,
     top_k_indices = [unseen_indices[i] for i in np.argsort(unseen_similarities)[::-1][:top_k]]
     return top_k_indices
 
-
 # TODO: Add Preferences
-def is_user_complete(user_likes, user_dislikes, user_seen, df) :
-    if (len(user_likes) > 2) :
+def is_user_complete(user_likes, user_dislikes, user_seen, df):
+    if len(user_likes) > 2:
         return True
-    
     return False
 
 def load_products_ts(products_path):
@@ -153,13 +155,11 @@ def recommender_function(user_likes, user_dislikes, user_seen, top_k=5):
         recommended = retrieve_recommendations(user_profile, user_likes, user_dislikes, user_seen, df, top_k=top_k)
     else:
         print("Random...")
-        recommended = random.sample([i for i in eligible_ids], top_k)
+        recommended = random.sample(list(eligible_ids), top_k)
     
     return recommended
 
-
 #############################################################################################
-
 
 # User Model
 class User(UserMixin, db.Model):
@@ -241,7 +241,7 @@ def register():
     except Exception as e:
         db.session.rollback()
         print("Registration error:", str(e))
-        return jsonify({"message": str(e)}), 500
+        return jsonify({"message": "Registration failed"}), 500
 
 # Route: Login
 @app.route("/login", methods=["POST"])
@@ -331,13 +331,11 @@ def get_images():
                 recommended_items.append(item_data)
             except (KeyError, IndexError) as e:
                 print(f"Error accessing clothing data for ID {clothing_id}: {e}")
-                continue
         
         return jsonify({"images": recommended_items})
     except Exception as e:
         print(f"Error in get_images: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
+        return jsonify({"message": "Failed to retrieve images"}), 500
 
 # Route: Like
 @app.route("/like", methods=["POST"])
@@ -369,7 +367,9 @@ def like():
         user_seen = [seen.clothing_id for seen in Seen.query.filter_by(user_id=current_user.id).all()]
         
         recommended_ids = recommender_function(user_likes, user_dislikes, user_seen, top_k=2)
-        products = load_products_ts(os.path.join(app.root_path, "src", "data", "full_products.ts"))
+        
+        products_path = os.path.join(app.root_path, "src", "data", "full_products.ts")
+        products = load_products_ts(products_path)
         
         recommended_items = []
         for clothing_id in recommended_ids:
@@ -396,7 +396,7 @@ def like():
     except Exception as e:
         db.session.rollback()
         print(f"Error in like route: {str(e)}")
-        return jsonify({"status": "failure", "message": str(e)}), 500
+        return jsonify({"status": "failure", "message": "An error occurred."}), 500
 
 # Route: Dislike
 @app.route("/dislike", methods=["POST"])
@@ -409,12 +409,12 @@ def dislike():
         if clothing_id is None:
             return jsonify({"status": "failure", "message": "No clothing ID provided."}), 400
 
-        # Check if already liked
+        # Check if already disliked
         existing_dislike = Dislike.query.filter_by(user_id=current_user.id, clothing_id=clothing_id).first()
         if existing_dislike:
-            return jsonify({"status": "failure", "message": "Already liked this item."}), 400
+            return jsonify({"status": "failure", "message": "Already disliked this item."}), 400
 
-        # Add like to the database
+        # Add dislike to the database
         new_dislike = Dislike(user_id=current_user.id, clothing_id=clothing_id)
         new_seen = Seen(user_id=current_user.id, clothing_id=clothing_id)
         
@@ -428,7 +428,9 @@ def dislike():
         user_seen = [seen.clothing_id for seen in Seen.query.filter_by(user_id=current_user.id).all()]
         
         recommended_ids = recommender_function(user_likes, user_dislikes, user_seen, top_k=2)
-        products = load_products_ts(os.path.join(app.root_path, "src", "data", "full_products.ts"))
+        
+        products_path = os.path.join(app.root_path, "src", "data", "full_products.ts")
+        products = load_products_ts(products_path)
         
         recommended_items = []
         for clothing_id in recommended_ids:
@@ -455,8 +457,4 @@ def dislike():
     except Exception as e:
         db.session.rollback()
         print(f"Error in dislike route: {str(e)}")
-        return jsonify({"status": "failure", "message": str(e)}), 500
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 4000))
-    app.run(host="0.0.0.0", port=port)
+        return jsonify({"status": "failure", "message": "An error occurred."}), 500
