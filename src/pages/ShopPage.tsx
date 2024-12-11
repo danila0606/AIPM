@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SwipeCard } from '../components/SwipeCard';
 import { useProducts } from '../hooks/useProducts';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../services/api';
+import { api } from '../services/api';
 import { Product } from '../types/product';
 
 export const ShopPage: React.FC = () => {
