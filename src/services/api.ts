@@ -79,7 +79,7 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ 
         clothing_id: parseInt(clothingId, 10)
-      }),
+    }),
     });
   }
 
@@ -88,6 +88,14 @@ class ApiService {
   }
 }
 
-const api = new ApiService();
+const apiService = new ApiService();
 
-export default api; 
+export const api = {
+  login: apiService.login.bind(apiService),
+  register: apiService.register.bind(apiService),
+  logout: apiService.logout.bind(apiService),
+  checkAuth: apiService.checkAuth.bind(apiService),
+  like: apiService.like.bind(apiService),
+  dislike: apiService.dislike.bind(apiService),
+  getImages: apiService.getImages.bind(apiService),
+};
