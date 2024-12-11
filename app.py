@@ -38,12 +38,13 @@ def create_app():
     CORS(app, 
          supports_credentials=True,
          resources={r"/*": {
-             "origins": ["https://polyswipe-8rc5hzpie-vsevolod-malevannyis-projects.vercel.app"],
-             "methods": ["GET", "POST", "OPTIONS"],
+             "origins": [
+                 "https://polyswipe.vercel.app",
+                 "https://polyswipe-8rc5hzpie-vsevolod-malevannyis-projects.vercel.app"
+             ],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
              "allow_headers": ["Content-Type", "Authorization"],
              "expose_headers": ["Access-Control-Allow-Origin"],
-             "supports_credentials": True,
-             "allow_credentials": True
          }})
 
     # Initialize extensions
@@ -69,10 +70,7 @@ if __name__ == '__main__':
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Origin', 'https://polyswipe-8rc5hzpie-vsevolod-malevannyis-projects.vercel.app')
+    # It's better to remove manual CORS header settings and rely on Flask-CORS
     return response
 
 # Configuration
