@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_login import (
     LoginManager,
@@ -9,55 +8,52 @@ from flask_login import (
     logout_user,
     current_user,
 )
-from werkzeug.security import generate_password_hash, check_password_hash
+from database import db
 import os
-import json
-import random
-import numpy as np
-import pandas as pd
-import re
-
-from typing import List
-from sklearn.metrics.pairwise import cosine_similarity
 from urllib.parse import urlparse
 
-app = Flask(__name__)
+def create_app():
+    app = Flask(__name__)
 
-# Update database configuration
-database_url = os.environ.get('DATABASE_URL')
-if database_url:
-    # Heroku's DATABASE_URL starts with 'postgres://' but SQLAlchemy needs 'postgresql://'
-    if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    # Update database configuration
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        # Heroku's DATABASE_URL starts with 'postgres://' but SQLAlchemy needs 'postgresql://'
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
 
-# Configure SQLAlchemy
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
-app.config["SQLALCHEMY_DATABASE_URI"] = database_url or "sqlite:///database.db"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    # Configure SQLAlchemy
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url or "sqlite:///database.db"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Configure CORS
-CORS(app, 
-     supports_credentials=True,
-     resources={r"/*": {
-         "origins": ["https://polyswipe-8rc5hzpie-vsevolod-malevannyis-projects.vercel.app"],
-         "methods": ["GET", "POST", "OPTIONS"],
-         "allow_headers": ["Content-Type", "Authorization"],
-         "expose_headers": ["Access-Control-Allow-Origin"],
-         "supports_credentials": True,
-         "allow_credentials": True
-     }})
+    # Configure CORS
+    CORS(app, 
+         supports_credentials=True,
+         resources={r"/*": {
+             "origins": ["https://polyswipe-8rc5hzpie-vsevolod-malevannyis-projects.vercel.app"],
+             "methods": ["GET", "POST", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization"],
+             "expose_headers": ["Access-Control-Allow-Origin"],
+             "supports_credentials": True,
+             "allow_credentials": True
+         }})
 
-db = SQLAlchemy(app)
+    # Initialize extensions
+    db.init_app(app)
+    
+    # Initialize login manager
+    login_manager = LoginManager()
+    login_manager.init_app(app)
 
-# Initialize login manager
-login_manager = LoginManager()
-login_manager.init_app(app)
+    return app
+
+app = create_app()
 
 def init_db():
     with app.app_context():
         db.create_all()
 
-# Call init_db() after all models are defined
 if __name__ == '__main__':
     init_db()
     app.run()
