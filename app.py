@@ -53,10 +53,14 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-# Add database initialization function
-@app.before_first_request
-def create_tables():
-    db.create_all()
+def init_db():
+    with app.app_context():
+        db.create_all()
+
+# Call init_db() after all models are defined
+if __name__ == '__main__':
+    init_db()
+    app.run()
 
 @app.after_request
 def after_request(response):
