@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, make_response
 from flask_cors import CORS
 from flask_login import (
     LoginManager,
@@ -70,7 +70,16 @@ if __name__ == '__main__':
 
 @app.after_request
 def after_request(response):
-    # It's better to remove manual CORS header settings and rely on Flask-CORS
+    # Removed manual CORS headers to rely solely on Flask-CORS
+    return response
+
+# Global handler for OPTIONS requests
+@app.route('/<path:path>', methods=['OPTIONS'])
+def handle_options(path):
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "https://polyswipe.vercel.app")
+    response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
     return response
 
 # Configuration
@@ -268,7 +277,8 @@ def logout():
     logout_user()
     return jsonify({"message": "Logged out successfully"})
 
-@app.route("/check-auth")
+@app.route("/check-auth", methods=["GET"])
+@login_required
 def check_auth():
     if current_user.is_authenticated:
         return jsonify({

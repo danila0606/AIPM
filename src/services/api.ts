@@ -1,7 +1,6 @@
 // const API_BASE_URL = 'http://localhost:4000';
 export const API_BASE_URL = 'https://polyswipe-d56822d3db23.herokuapp.com';
 
-
 interface LoginCredentials {
   username: string;
   password: string;
@@ -9,6 +8,10 @@ interface LoginCredentials {
 
 interface RegisterCredentials extends LoginCredentials {
   confirm_password: string;
+}
+
+interface LikeDislikePayload {
+  clothing_id: number;
 }
 
 class ApiService {
@@ -64,10 +67,10 @@ class ApiService {
 
   async like(clothingId: string) {
     return this.request('/like', {
-        method: 'POST',
-        body: JSON.stringify({ 
-            clothing_id: parseInt(clothingId, 10)
-        }),
+      method: 'POST',
+      body: JSON.stringify({ 
+          clothing_id: parseInt(clothingId, 10)
+      }),
     });
   }
 
@@ -76,9 +79,15 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ 
         clothing_id: parseInt(clothingId, 10)
-    }),
+      }),
     });
+  }
+
+  async getImages() {
+    return this.request('/get_images');
   }
 }
 
-export const api = new ApiService(); 
+const api = new ApiService();
+
+export default api; 

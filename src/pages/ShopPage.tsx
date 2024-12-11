@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { SwipeCard } from '../components/SwipeCard';
 import { useProducts } from '../hooks/useProducts';
 import { motion, AnimatePresence } from 'framer-motion';
-import { api } from '../services/api';
+import api from '../services/api';
 import { Product } from '../types/product';
-import { API_BASE_URL } from '../services/api';
 
 export const ShopPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -15,40 +14,22 @@ export const ShopPage: React.FC = () => {
   const fetchMoreProducts = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/get_images`, {
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('Received data:', data);
+      const data = await api.getImages();
       
       if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-        const newProducts = data.images.map((item: any) => {
-          console.log('Processing item:', item);
-          return {
-            id: item.clothing_id.toString(),
-            name: item.name,
-            price: typeof item.prize === 'string' ? 
-              parseFloat(item.prize.replace('£', '')) : 
-              item.prize,
-            description: item.description || '',
-            imageUrl: Array.isArray(item.images) ? item.images[0] : item.images,
-            brand: item.name?.split(' ')[0] || 'Unknown',
-            size: item.name?.split(' - ')[1] || '',
-            condition: item.description?.split('CONDITION: ')[1]?.split('\n')[0] || '',
-            externalUrl: item.url || '#'
-          };
-        });
+        const newProducts = data.images.map((item: any) => ({
+          id: item.clothing_id.toString(),
+          name: item.name,
+          price: typeof item.prize === 'string' ? 
+            parseFloat(item.prize.replace('£', '')) : 
+            item.prize,
+          description: item.description || '',
+          imageUrl: Array.isArray(item.images) ? item.images[0] : item.images,
+          brand: item.name?.split(' ')[0] || 'Unknown',
+          size: item.name?.split(' - ')[1] || '',
+          condition: item.description?.split('CONDITION: ')[1]?.split('\n')[0] || '',
+          externalUrl: item.url || '#'
+        }));
         
         console.log('Processed products:', newProducts);
         setProducts(prevProducts => [...prevProducts, ...newProducts]);
