@@ -19,16 +19,27 @@ import re
 
 from typing import List
 from sklearn.metrics.pairwise import cosine_similarity
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///database.db")
+# Update database configuration
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # Heroku's DATABASE_URL starts with 'postgres://' but SQLAlchemy needs 'postgresql://'
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
 
+# Configure SQLAlchemy
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url or "sqlite:///database.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Configure CORS
 CORS(app, 
      supports_credentials=True,
      resources={r"/*": {
-         "origins": ["https://polyswipe.vercel.app"],  # Your actual Vercel frontend URL
+         "origins": ["https://polyswipe-8rc5hzpie-vsevolod-malevannyis-projects.vercel.app"],
          "methods": ["GET", "POST", "OPTIONS"],
          "allow_headers": ["Content-Type", "Authorization"],
          "expose_headers": ["Access-Control-Allow-Origin"],
@@ -36,12 +47,23 @@ CORS(app,
          "allow_credentials": True
      }})
 
+db = SQLAlchemy(app)
+
+# Initialize login manager
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+# Add database initialization function
+@app.before_first_request
+def create_tables():
+    db.create_all()
+
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Origin', 'https://polyswipe.vercel.app')
+    response.headers.add('Access-Control-Allow-Origin', 'https://polyswipe-8rc5hzpie-vsevolod-malevannyis-projects.vercel.app')
     return response
 
 # Configuration
@@ -53,7 +75,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_SAMESITE='None',
-    SESSION_COOKIE_DOMAIN='https://polyswipe.vercel.app',
+    SESSION_COOKIE_DOMAIN='https://polyswipe-8rc5hzpie-vsevolod-malevannyis-projects.vercel.app',
     SESSION_COOKIE_HTTPONLY=False
 )
 
@@ -183,10 +205,6 @@ class Seen(db.Model):
     __table_args__ = (
         db.UniqueConstraint('user_id', 'clothing_id', name='unique_user_seen'),
     )
-
-# Create the database tables
-with app.app_context():
-    db.create_all()
 
 # User Loader Callback for Flask-Login
 @login_manager.user_loader

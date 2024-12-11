@@ -17,3 +17,4 @@ SQLAlchemy
 # transformers==4.46.3
 Werkzeug
 gunicorn
+psycopg2-binary==2.9.10
